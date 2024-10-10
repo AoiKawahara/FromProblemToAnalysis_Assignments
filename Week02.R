@@ -1,14 +1,14 @@
-# ベルギー人のみのデータ抽出
-data <- read.csv("/Users/aoikawahara/Documents/Leuven/03_From Problem to Analysis/Assignments/Week01/ESS10.csv")
-be_data <- subset(data, cntry == "BE")
+# データフレーム作成から欠損データの除外
+df <- read.csv("/Users/aoikawahara/Documents/Leuven/03_From Problem to Analysis/Assignments/Week01/ESS10.csv")
+df <- subset(df, cntry == "BE")
+df<- select(df, imsmetn, imdfetn, impcntr, imbgeco, imueclt, imwbcnt)
 
-# クリーニング済みReligiosityデータの格納
-rlgsty_data <- subset(be_data$rlgdgr, be_data$rlgdgr < 11)
+# 欠損データの削除 - 保持率96.5%
+df1 <- subset(df, df$imsmetn < 5 & df$imdfetn < 5 & df$impcntr < 5 & df$imbgeco < 11 & df$imueclt < 11 & df$imwbcnt < 11)
 
 
 # B40 imsmetn - Allow many/few immigrants of same race/ethnic group as majority
-b40_data <- subset(be_data$imsmetn, be_data$imsmetn < 5)
-b40_responses <- as.data.frame(table(b40_data))
+b40_responses <- as.data.frame(table(df1$imsmetn))
 colnames(b40_responses) <- c("Response", "Count")
 b40_responses$Percent <- b40_responses$Count / sum(b40_responses$Count) * 100
 
@@ -19,14 +19,13 @@ ggplot(b40_responses, aes(x = "", y = Count, fill = Response)) +
   ylab("") +
   theme(legend.position = "bottom") +
   guides(fill = guide_legend(reverse = TRUE)) +
-  scale_fill_brewer(labels = c("1" = "Allow many to come live here", "2" = "Allow some", "3" = "Allow a few", "4" = "Allow none")) +
+  scale_fill_brewer(palette="Greys", labels = c("1" = "Allow many to come live here", "2" = "Allow some", "3" = "Allow a few", "4" = "Allow none")) +
   scale_y_continuous(labels = scales::percent) +
   coord_flip() +
   geom_text(aes(label = paste0(round(Percent, 1), "%")), position = position_fill(vjust = 0.5))
 
 # B41 imdfetn - Allow many/few immigrants of different race/ethnic group from majority
-b41_data <- subset(be_data$imdfetn, be_data$imdfetn < 5)
-b41_responses <- as.data.frame(table(b41_data))
+b41_responses <- as.data.frame(table(df1$imdfetn))
 colnames(b41_responses) <- c("Response", "Count")
 b41_responses$Percent <- b41_responses$Count / sum(b41_responses$Count) * 100
 
@@ -37,15 +36,14 @@ ggplot(b41_responses, aes(x = "", y = Count, fill = Response)) +
   ylab("") +
   theme(legend.position = "bottom") +
   guides(fill = guide_legend(reverse = TRUE)) +
-  scale_fill_brewer(labels = c("1" = "Allow many to come live here", "2" = "Allow some", "3" = "Allow a few", "4" = "Allow none")) +
+  scale_fill_brewer(palette="Greys", labels = c("1" = "Allow many to come live here", "2" = "Allow some", "3" = "Allow a few", "4" = "Allow none")) +
   scale_y_continuous(labels = scales::percent) +
   coord_flip() +
   geom_text(aes(label = paste0(round(Percent, 1), "%")), position = position_fill(vjust = 0.5))
 
 
 # B42 impcntr – Allow many/few immigrants from poorer countries outside Europe
-b42_data <- subset(be_data$impcntr, be_data$impcntr < 5)
-b42_responses <- as.data.frame(table(b42_data))
+b42_responses <- as.data.frame(table(df1$impcntr))
 colnames(b42_responses) <- c("Response", "Count")
 b42_responses$Percent <- b42_responses$Count / sum(b42_responses$Count) * 100
 
@@ -56,15 +54,14 @@ ggplot(b42_responses, aes(x = "", y = Count, fill = Response)) +
   ylab("") +
   theme(legend.position = "bottom") +
   guides(fill = guide_legend(reverse = TRUE)) +
-  scale_fill_brewer(labels = c("1" = "Allow many to come live here", "2" = "Allow some", "3" = "Allow a few", "4" = "Allow none")) +
+  scale_fill_brewer(palette="Greys", labels = c("1" = "Allow many to come live here", "2" = "Allow some", "3" = "Allow a few", "4" = "Allow none")) +
   scale_y_continuous(labels = scales::percent) +
   coord_flip() +
   geom_text(aes(label = paste0(round(Percent, 1), "%")), position = position_fill(vjust = 0.5))
 
 
 # B43 imbgeco – Immigration bad or good for country’s economy
-b43_data <- subset(be_data$imbgeco, be_data$imbgeco < 11)
-b43_responses <- as.data.frame(table(b43_data))
+b43_responses <- as.data.frame(table(df1$imbgeco))
 colnames(b43_responses) <- c("Response", "Count")
 b43_responses$Percent <- b43_responses$Count / sum(b43_responses$Count) * 100
 
@@ -75,8 +72,7 @@ ggplot(b43_responses, aes(x = Response, y = Count)) +
 
 
 # B44 imueclt – Country’s cultural life undermined or enriched by immigrants
-b44_data <- subset(be_data$imueclt, be_data$imueclt < 11)
-b44_responses <- as.data.frame(table(b44_data))
+b44_responses <- as.data.frame(table(df1$imueclt))
 colnames(b44_responses) <- c("Response", "Count")
 b44_responses$Percent <- b44_responses$Count / sum(b44_responses$Count) * 100
 
@@ -87,8 +83,7 @@ ggplot(b44_responses, aes(x = Response, y = Count)) +
 
 
 # B45 imwbcnt – Immigrants make country worse or better place to live
-b45_data <- subset(be_data$imwbcnt, be_data$imwbcnt < 11)
-b45_responses <- as.data.frame(table(b45_data))
+b45_responses <- as.data.frame(table(df1$imwbcnt))
 colnames(b45_responses) <- c("Response", "Count")
 b45_responses$Percent <- b45_responses$Count / sum(b45_responses$Count) * 100
 
@@ -97,6 +92,70 @@ ggplot(b45_responses, aes(x = Response, y = Count)) +
   geom_text(aes(label = paste0(round(Percent, 1), "%")), position = position_stack(vjust = 1.05)) + 
   ggtitle("Immigrants make country worse or better place to live?")
 
+
+# B40-B42 How many allow to come and live
+allow_df <- data.frame(
+  Response = c("Many", "Some", "A few", "None"),
+  B40 = b40_responses$Count,
+  B41 = b41_responses$Count,
+  B42 = b42_responses$Count
+)
+allow_df <- gather(allow_df, key = "Question", value = "Count", B40:B42)
+
+ggplot(allow_df, aes(x = Response, y = Count, fill = Question)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Response") +
+  ylab("Count") +
+  theme(legend.position = "bottom") +
+  scale_x_discrete(limit = c("Many", "Some", "A few", "None")) +
+  scale_fill_discrete(name = "", labels = c(B40 = "the same race/ethnic group", B41 = "different race/ethnic group", B42 = "poorer countries")) +
+  ggtitle("How many allow to come and live in Belgium?")
+
+
+# B43-B45 The impact of immigration
+impact_df <- data.frame(
+  Response = b43_responses$Response,
+  B43 = b43_responses$Count,
+  B44 = b44_responses$Count,
+  B45 = b45_responses$Count
+)
+impact_df <- gather(impact_df, key = "Question", value = "Count", B43:B45)
+
+ggplot(impact_df, aes(x = Response, y = Count, fill = Question)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  xlab("Response") +
+  ylab("Count") +
+  theme(legend.position = "bottom") +
+  scale_fill_discrete(name = "", labels = c(B43 = "Economy", B44 = "Culture", B45 = "Better place")) +
+  ggtitle("The impact of immigration on Belgium?")
+
+
+# Correlation matrix
+correlation <- cor(df1, method = "spearman")
+
+
+# PCAによる因子分析
+pca <- prcomp(df1, scale = TRUE)
+summary(pca)
+
+# 固有値(eigenvalues)の算出とscree plot
+pca_eigen_df <- data.frame(
+  Eigenvalue = c((pca$sdev)^2),
+  Factors = c("1", "2", "3", "4", "5", "6")
+  )
+
+ggplot(pca_eigen_df, aes(x = Factors, y = Eigenvalue)) +
+  geom_point() +
+  geom_line(group = 1) +
+  xlab("Factors") +
+  ylab("Eigenvalue") +
+  ggtitle("Scree Plot of Eigenvalue (Principal Component Analysis)")
+
+# 因子負荷量(factor loading)と共通性(communality)の算出
+pca_loadings <- sweep(pca$rotation, MARGIN = 2, pca$sdev, FUN = "*")
+pca_communalities <- rowSums(loadings^2)
+
+# 主成分スコアの算出とstandardization
 
 
 
