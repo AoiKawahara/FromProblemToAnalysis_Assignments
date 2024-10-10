@@ -1,4 +1,4 @@
-# データフレーム作成から欠損データの除外
+# データフレーム作成
 df <- read.csv("/Users/aoikawahara/Documents/Leuven/03_From Problem to Analysis/Assignments/Week01/ESS10.csv")
 df <- subset(df, cntry == "BE")
 df<- select(df, imsmetn, imdfetn, impcntr, imbgeco, imueclt, imwbcnt)
@@ -130,32 +130,28 @@ ggplot(impact_df, aes(x = Response, y = Count, fill = Question)) +
   ggtitle("The impact of immigration on Belgium?")
 
 
+# 因子数の決定
 # Correlation matrix
 correlation <- cor(df1, method = "spearman")
 
-
-# PCAによる因子分析
-pca <- prcomp(df1, scale = TRUE)
-summary(pca)
-
 # 固有値(eigenvalues)の算出とscree plot
-pca_eigen_df <- data.frame(
-  Eigenvalue = c((pca$sdev)^2),
+eigen_df <- data.frame(
+  Eigenvalue = eigen(correlation)$values,
   Factors = c("1", "2", "3", "4", "5", "6")
-  )
+)
 
-ggplot(pca_eigen_df, aes(x = Factors, y = Eigenvalue)) +
+ggplot(eigen_df, aes(x = Factors, y = Eigenvalue)) +
   geom_point() +
   geom_line(group = 1) +
   xlab("Factors") +
   ylab("Eigenvalue") +
-  ggtitle("Scree Plot of Eigenvalue (Principal Component Analysis)")
+  ggtitle("Scree Plot of Eigenvalue")
 
-# 因子負荷量(factor loading)と共通性(communality)の算出
-pca_loadings <- sweep(pca$rotation, MARGIN = 2, pca$sdev, FUN = "*")
-pca_communalities <- rowSums(loadings^2)
 
-# 主成分スコアの算出とstandardization
+# PCAによる因子分析
+principal(df1, nfactors = 2, rotate = "promax")
+
+
 
 
 
