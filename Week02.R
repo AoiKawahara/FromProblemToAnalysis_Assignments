@@ -129,10 +129,19 @@ ggplot(impact_df, aes(x = Response, y = Count, fill = Question)) +
   scale_fill_discrete(name = "", labels = c(B43 = "Economy", B44 = "Culture", B45 = "Better place")) +
   ggtitle("The impact of immigration on Belgium?")
 
+# anti-score算出のためのデータ反転(B43-B45)
+df1$imbgeco <- 10 - df1$imbgeco
+df1$imueclt <- 10 - df1$imueclt
+df1$imwbcnt <- 10 - df1$imwbcnt
+
+head(df1)
+
 
 # 因子数の決定
 # Correlation matrix
 correlation <- cor(df1, method = "spearman")
+
+correlation
 
 # 固有値(eigenvalues)の算出とscree plot
 eigen_df <- data.frame(
@@ -149,13 +158,15 @@ ggplot(eigen_df, aes(x = Factors, y = Eigenvalue)) +
 
 
 # PCAによる因子分析
-principal(df1, nfactors = 2, rotate = "promax")
+pca <- principal(df1, nfactors = 2, rotate = "promax")
 
+# 累積分散割合を用いてスコアを算出
+df1_with_scores <- cbind(df1, pca$scores)
+df1_with_scores$combined_fs <- (0.54 * df1_with_scores$RC1) + (0.46 * df1_with_scores$RC2)
 
-
-
-
-
-
-
+ggplot(df1_with_scores, aes(x = combined_fs)) +
+  geom_histogram(binwidth = 0.1) +
+  xlab("Anti-immigration Score") +
+  ylab("Count") +
+  ggtitle("Histogram of Anti-immigration Scores")
 
