@@ -7,6 +7,9 @@ df<- select(df, imsmetn, imdfetn, impcntr, imbgeco, imueclt, imwbcnt)
 df1 <- subset(df, df$imsmetn < 5 & df$imdfetn < 5 & df$impcntr < 5 & df$imbgeco < 11 & df$imueclt < 11 & df$imwbcnt < 11)
 
 
+
+# Data visualization - descriptives
+
 # B40 imsmetn - Allow many/few immigrants of same race/ethnic group as majority
 b40_responses <- as.data.frame(table(df1$imsmetn))
 colnames(b40_responses) <- c("Response", "Count")
@@ -129,19 +132,19 @@ ggplot(impact_df, aes(x = Response, y = Count, fill = Question)) +
   scale_fill_discrete(name = "", labels = c(B43 = "Economy", B44 = "Culture", B45 = "Better place")) +
   ggtitle("The impact of immigration on Belgium?")
 
+
+
 # anti-score算出のためのデータ反転(B43-B45)
 df1$imbgeco <- 10 - df1$imbgeco
 df1$imueclt <- 10 - df1$imueclt
 df1$imwbcnt <- 10 - df1$imwbcnt
 
-head(df1)
 
 
 # 因子数の決定
+
 # Correlation matrix
 correlation <- cor(df1, method = "spearman")
-
-correlation
 
 # 固有値(eigenvalues)の算出とscree plot
 eigen_df <- data.frame(
@@ -157,16 +160,35 @@ ggplot(eigen_df, aes(x = Factors, y = Eigenvalue)) +
   ggtitle("Scree Plot of Eigenvalue")
 
 
+
 # PCAによる因子分析
 pca <- principal(df1, nfactors = 2, rotate = "promax")
 
 # 累積分散割合を用いてスコアを算出
-df1_with_scores <- cbind(df1, pca$scores)
-df1_with_scores$combined_fs <- (0.54 * df1_with_scores$RC1) + (0.46 * df1_with_scores$RC2)
+df1_with_pcascores <- cbind(df1, pca$scores)
+df1_with_pcascores$combined_fs <- (0.54 * df1_with_scores$RC1) + (0.46 * df1_with_scores$RC2)
 
-ggplot(df1_with_scores, aes(x = combined_fs)) +
+ggplot(df1_with_pcascores, aes(x = combined_fs)) +
   geom_histogram(binwidth = 0.1) +
   xlab("Anti-immigration Score") +
   ylab("Count") +
-  ggtitle("Histogram of Anti-immigration Scores")
+  ggtitle("Histogram of Anti-immigration Scores (PCA)")
+
+
+
+# PAFによる因子分析
+paf <- fa(df1, nfactors = 2,
+          fm = "pa",
+          rotate = "promax")
+
+# 累積分散割合を用いてスコアを算出
+df1_with_pafscores <- cbind(df1, paf$scores)
+df1_with_pafscores$combined_fs <- (0.57 * df1_with_pafscores$PA1) + (0.46 * df1_with_pafscores$PA2)
+
+ggplot(df1_with_pafscores, aes(x = combined_fs)) +
+  geom_histogram(binwidth = 0.1) +
+  xlab("Anti-immigration Score") +
+  ylab("Count") +
+  ggtitle("Histogram of Anti-immigration Scores (PAF)")
+
 
