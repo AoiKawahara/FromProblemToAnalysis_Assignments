@@ -1,3 +1,9 @@
+library("dplyr")
+library("ggplot2")
+library("parallel")
+library("psych")
+
+
 # データフレーム作成
 df <- read.csv("/Users/aoikawahara/Documents/Leuven/03_From Problem to Analysis/Assignments/Week01/ESS10.csv")
 df <- subset(df, cntry == "BE")
