@@ -1,3 +1,4 @@
+#### Libraries ####
 library("dplyr")
 library("ggplot2")
 library("parallel")
@@ -5,12 +6,12 @@ library("psych")
 library("tidyr")
 
 
-# イタリア人データフレーム作成
+#### イタリア人データフレーム作成 ####
 df <- read.csv("/Users/aoikawahara/Documents/Leuven/03_From Problem to Analysis/Assignments/Week01/ESS10.csv")
 df <- subset(df, cntry == "IT")
 df <- select(df, rlgdgr, rlgatnd, pray, imsmetn, imdfetn, impcntr, imbgeco, imueclt, imwbcnt)
 
-# 欠損データの削除
+##### 欠損データの削除 ####
 df <- subset(df,
              df$rlgdgr < 11 &
              df$rlgatnd < 8 &
@@ -22,9 +23,7 @@ df <- subset(df,
              df$imueclt < 11 &
              df$imwbcnt < 11)
 
-
-# Counting responses
-
+##### Counting responses #####
 count_rlgdgr <- as.data.frame(table(df$rlgdgr))
 colnames(count_rlgdgr) <- c("Response", "Count")
 
@@ -52,15 +51,14 @@ colnames(count_imueclt) <- c("Response", "Count")
 count_imwbcnt <- as.data.frame(table(df$imwbcnt))
 colnames(count_imwbcnt) <- c("Response", "Count")
 
-
-# Data visualization - descriptives
-
+#### Data visualization - descriptives ####
 ggplot(count_rlgdgr, aes(x = Response, y = Count)) +
   geom_bar(stat = "identity") +
   xlab("Response") +
   ylab("Count") +
   theme(legend.position = "bottom") +
   ggtitle("How religious do you think you are?")
+
 
 
 action_df <- data.frame(
@@ -77,6 +75,7 @@ ggplot(action_df, aes(x = Response, y = Count, fill = Question)) +
   scale_x_discrete(limit = c("Never", "Less often", "Only on special holidays", "At least once a month", "Once a week", "More than once a week", "Every day")) +
   theme(legend.position = "bottom") +
   ggtitle("How often do you attend religious services/pray?")
+
 
 
 allow_df <- data.frame(
@@ -96,6 +95,7 @@ ggplot(allow_df, aes(x = Response, y = Count, fill = Question)) +
   ggtitle("How many allow to come and live in Italy?")
 
 
+
 impact_df <- data.frame(
   Response = count_imbgeco$Response,
   Economy = count_imbgeco$Count,
@@ -110,22 +110,18 @@ ggplot(impact_df, aes(x = Response, y = Count, fill = Question)) +
   ylab("Count") +
   theme(legend.position = "bottom") +
   ggtitle("The impact of immigration on Italy?")
-
-
-# データの反転
+#### データの反転 ####
 df$rlgatnd <- 8 - df$rlgatnd
 df$pray <- 8 - df$pray
 df$imbgeco <- 10 - df$imbgeco
 df$imueclt <- 10 - df$imueclt
 df$imwbcnt <- 10 - df$imwbcnt
 
-
-# correlation matrix - all questions
+#### Correlation matrix - all questions ####
 correlation <- cor(df, method = "spearman")
 correlation
 
-
-# Religiosity - PAF実行
+##### Religiosity - PAF実行&Score算出 ####
 rlg_df <- select(df, rlgdgr, rlgatnd, pray)
 fa.parallel(rlg_df, fa = "fa", fm = "pa")
 rlg_paf <- fa(rlg_df,
@@ -134,7 +130,7 @@ rlg_paf <- fa(rlg_df,
               rotate = "oblimin")
 rlg_paf
 
-# Religiosity - Score算出
+
 df_with_rlgscores <- cbind(df, rlg_paf$scores)
 
 ggplot(df_with_rlgscores, aes(x = PA1)) +
@@ -143,8 +139,7 @@ ggplot(df_with_rlgscores, aes(x = PA1)) +
   ylab("Count") +
   ggtitle("Histogram of Religiosity Scores (PAF)")
 
-
-# Immigrants - PAF実行
+#### Immigrants - PAF実行&Score算出 ####
 imm_df <- select(df, imsmetn, imdfetn, impcntr, imbgeco, imueclt, imwbcnt)
 fa.parallel(imm_df, fa = "fa", fm = "pa")
 imm_paf <- fa(imm_df,
@@ -153,7 +148,7 @@ imm_paf <- fa(imm_df,
               rotate = "oblimin")
 imm_paf
 
-# Immigrants - Score算出
+
 df_with_immscores <- cbind(df, imm_paf$scores)
 df_with_immscores$combined_fs <- (0.52 * df_with_immscores$PA1) + (0.48 * df_with_immscores$PA2)
 
@@ -163,12 +158,12 @@ ggplot(df_with_immscores, aes(x = combined_fs)) +
   ylab("Count") +
   ggtitle("Histogram of Anti-immigration Scores (PAF)")
 
-
-# 散布図 - ReligiosityとImmigrantsの関係
+#### 散布図 - ReligiosityとImmigrantsの関係 ####
 scores_df <- data.frame(
   Religiosity = df_with_rlgscores$PA1,
   AntiImmigrants = df_with_immscores$combined_fs
 )
+
 ggplot(scores_df, aes(x = Religiosity, y = AntiImmigrants)) +
   geom_point() +
   xlab("Religiosity") +
