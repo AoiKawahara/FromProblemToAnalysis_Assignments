@@ -130,6 +130,13 @@ df2 <- df2 %>%
                                df2$Age >= 40 & df2$Age < 60 ~ "40~59",
                                df2$Age >= 60 ~ "60~",))
 
+df2 <- df2 %>%
+  mutate(Trust_group = case_when(df2$Trust < -0.5617 ~ "1stQ",
+                                 df2$Trust >= -0.5617 & df2$Trust < 0 ~ "2ndQ",
+                                 df2$Trust >= 0 & df2$Trust < 0.6185 ~ "3rdQ",
+                                 df2$Trust >= 0.6185 ~ "4thQ"))
+
+summary(df2$Trust)
 
 #### Direct causal relation ####
 # Binomial logistic regression model: Vote - Age
@@ -160,6 +167,8 @@ ggplot(df2, aes(Trust, predp.model2)) +
 
 
 #### Moderated causal relation ####
+
+# Age * Trust
 model3 <- glm(Vote ~ Age * Trust, data = df2, family = binomial(link = "logit"))
 summary(model3)
 
@@ -177,4 +186,23 @@ interaction.plot(
   type = "b",
   pch = 19,
   col = c("red", "blue", "green"))
+
+# Trust * Age
+model4 <- glm(Vote ~ Trust * Age, data = df2, family = binomial(link = "logit")) #model3と全く同じ
+summary(model4)
+
+df2$predl.model4 = predict.glm(model4) # logits
+df2$predo.model4 = exp(df2$predl.model4) # odds
+df2$predp.model4 = df2$predo.model4 / (1 + df2$predo.model4) # probabilities
+
+interaction.plot(
+  x.factor = df2$Age,                    # X軸の変数
+  xlab = "Age",
+  trace.factor = df2$Trust_group,            # 線で描き分ける変数
+  response = df2$predp.model4,             # y軸の変数
+  ylab = "Mean of Probability of Voting",
+  fun = mean,                              # 平均値を図示
+  type = "b",
+  pch = 19,
+  col = c("red", "Yellow", "blue", "green"))
 
