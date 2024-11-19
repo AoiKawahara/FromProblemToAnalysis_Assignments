@@ -39,8 +39,8 @@ df1 <- subset(df,
 
 #### データの反転 ####
 df1$vote <- 2 - df1$vote
-# 元 Yes = 1, No = 2
-# 新 Yes = 1, No = 0
+# original: Yes = 1, No = 2
+# new     : Yes = 1, No = 0
 
 
 #### column名変更 ####
@@ -72,6 +72,7 @@ df_trst <- select(df1, Say, Active, Influence,
                   S_Gov, S_Democ)
 
 alpha(df_trst)
+# raw_alpha = 0.91
 
 fa.parallel(df_trst, fa = "fa", fm = "pa")
 paf_trst <- fa(df_trst,
@@ -91,33 +92,21 @@ ggplot(df_trst, aes(x = combined_fs)) +
   ylab("Count") +
   ggtitle("Histogram of Trust Scores (PAF)")
 
-# Active無しバージョン
-df_trst2 <- select(df1, Say, Influence,
-                  T_Parl, T_Legal, T_Politicians, T_Parties, T_EU, T_UN,
-                  S_Gov, S_Democ)
-
-alpha(df_trst2)
-
-fa.parallel(df_trst2, fa = "fa", fm = "pa")
-paf_trst2 <- fa(df_trst2,
-               fm = "pa",
-               nfactors = 4,
-               rotate = "oblimin")
-paf_trst2
 
 # ActiveとT_ParlとT_Legal無しバージョン
-df_trst3 <- select(df1, Say, Influence,
+df_trst2 <- select(df1, Say, Influence,
                    T_Politicians, T_Parties, T_EU, T_UN,
                    S_Gov, S_Democ)
 
-alpha(df_trst3)
+alpha(df_trst2)
+# raw_alpha = 0.9
 
-fa.parallel(df_trst3, fa = "fa", fm = "pa")
-paf_trst3 <- fa(df_trst3,
+fa.parallel(df_trst2, fa = "fa", fm = "pa")
+paf_trst2 <- fa(df_trst2,
                 fm = "pa",
                 nfactors = 4,
                 rotate = "oblimin")
-paf_trst3
+paf_trst2
 
 
 #### モデリング用データフレーム(df2)作成 ####
@@ -139,36 +128,43 @@ df2 <- df2 %>%
 summary(df2$Trust)
 
 #### Direct causal relation ####
-# Binomial logistic regression model: Vote - Age
-model1 <- glm(Vote ~ Age, data = df2, family = binomial(link = "logit"))
+
+# H0 - Binomial logistic regression model: Vote - Age
+model0 <- glm(Vote ~ Age, data = df2, family = binomial(link = "logit"))
+summary(model0)
+
+df2$predl.model0 = predict.glm(model0) # logits
+df2$predo.model0 = exp(df2$predl.model0) # odds
+df2$predp.model0 = df2$predo.model0 / (1 + df2$predo.model0) # probabilities
+
+ggplot(df2, aes(Age, predp.model0)) +
+  geom_line() +
+  ylim(0,1) +
+  ylab("Probability of Voting") +
+  theme_bw()
+
+# H1 - Binomial logistic regression model: Vote ~ Trust
+model1 <- glm(Vote ~ Trust, data = df2, family = binomial(link = "logit"))
 summary(model1)
 
 df2$predl.model1 = predict.glm(model1) # logits
 df2$predo.model1 = exp(df2$predl.model1) # odds
 df2$predp.model1 = df2$predo.model1 / (1 + df2$predo.model1) # probabilities
 
-ggplot(df2, aes(Age, predp.model1)) +
+ggplot(df2, aes(Trust, predp.model1)) +
   geom_line() +
+  ylim(0,1) +
   ylab("Probability of Voting") +
   theme_bw()
 
-# Binomial logistic regression model: Vote ~ Trust
-model2 <- glm(Vote ~ Trust, data = df2, family = binomial(link = "logit"))
+# H2 - Linear regression model: Trust ~ Age
+model2 <- lm(Trust ~ Age, data = df2)
 summary(model2)
-
-df2$predl.model2 = predict.glm(model2) # logits
-df2$predo.model2 = exp(df2$predl.model2) # odds
-df2$predp.model2 = df2$predo.model2 / (1 + df2$predo.model2) # probabilities
-
-ggplot(df2, aes(Trust, predp.model2)) +
-  geom_line() +
-  ylab("Probability of Voting") +
-  theme_bw()
 
 
 #### Moderated causal relation ####
 
-# Age * Trust
+# H3 - Interaction model: Vote ~ Age * Trust
 model3 <- glm(Vote ~ Age * Trust, data = df2, family = binomial(link = "logit"))
 summary(model3)
 
@@ -176,6 +172,7 @@ df2$predl.model3 = predict.glm(model3) # logits
 df2$predo.model3 = exp(df2$predl.model3) # odds
 df2$predp.model3 = df2$predo.model3 / (1 + df2$predo.model3) # probabilities
 
+# Age groupで描き分け
 interaction.plot(
   x.factor = df2$Trust,                    # X軸の変数
   xlab = "Trust",
@@ -187,22 +184,14 @@ interaction.plot(
   pch = 19,
   col = c("red", "blue", "green"))
 
-# Trust * Age
-model4 <- glm(Vote ~ Trust * Age, data = df2, family = binomial(link = "logit")) #model3と全く同じ
-summary(model4)
-
-df2$predl.model4 = predict.glm(model4) # logits
-df2$predo.model4 = exp(df2$predl.model4) # odds
-df2$predp.model4 = df2$predo.model4 / (1 + df2$predo.model4) # probabilities
-
+# Trustで描き分け
 interaction.plot(
   x.factor = df2$Age,                    # X軸の変数
   xlab = "Age",
-  trace.factor = df2$Trust_group,            # 線で描き分ける変数
-  response = df2$predp.model4,             # y軸の変数
+  trace.factor = df2$Trust_group,        # 線で描き分ける変数
+  response = df2$predp.model3,           # y軸の変数
   ylab = "Mean of Probability of Voting",
-  fun = mean,                              # 平均値を図示
+  fun = mean,                            # 平均値を図示
   type = "b",
   pch = 19,
   col = c("red", "Yellow", "blue", "green"))
-
