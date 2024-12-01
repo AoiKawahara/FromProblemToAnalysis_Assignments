@@ -14,8 +14,8 @@ library("corrplot")
 df <- read.csv("/Users/aoikawahara/Documents/Leuven/03_From Problem to Analysis/Assignments/Week01/ESS10.csv")
 df <- subset(df, cntry == "BE")
 df <- select(df, agea,
-             psppsgva, actrolga, psppipla,
-             trstprl, trstlgl, trstplt, trstprt, trstep, trstun,
+             psppsgva, psppipla,
+             trstplt, trstprt, trstep, trstun,
              stfgov, stfdem,
              vote)
 
@@ -24,10 +24,7 @@ df <- select(df, agea,
 df1 <- subset(df, 
              df$agea < 999 &
                df$psppsgva < 6 &
-               df$actrolga < 6 &
                df$psppipla < 6 &
-               df$trstprl < 11 &
-               df$trstlgl< 11 &
                df$trstplt < 11 &
                df$trstprt < 11 &
                df$trstep < 11 &
@@ -47,16 +44,13 @@ df1$vote <- 2 - df1$vote
 df1 <- df1 %>%
   rename(Age = agea,
          Say = psppsgva,
-         Active = actrolga,
          Influence = psppipla,
-         T_Parl = trstprl,
-         T_Legal = trstlgl,
          T_Politicians = trstplt,
          T_Parties= trstprt,
          T_EU = trstep,
          T_UN = trstun,
-         S_Gov = stfgov,
-         S_Democ = stfdem,
+         S_Government = stfgov,
+         S_Democracy = stfdem,
          Vote = vote)
 
 
@@ -67,12 +61,12 @@ corrplot(c, method = "color", addCoef.col = TRUE)
 
 
 #### Trust 変数の作成 ####
-df_trst <- select(df1, Say, Active, Influence,
-                  T_Parl, T_Legal, T_Politicians, T_Parties, T_EU, T_UN,
-                  S_Gov, S_Democ)
+df_trst <- select(df1, Say, Influence,
+                  T_Politicians, T_Parties, T_EU, T_UN,
+                  S_Government, S_Democracy)
 
 alpha(df_trst)
-# raw_alpha = 0.91
+# raw_alpha = 0.90
 
 fa.parallel(df_trst, fa = "fa", fm = "pa")
 paf_trst <- fa(df_trst,
@@ -84,29 +78,13 @@ paf_trst
 df_trst <- cbind(df_trst, paf_trst$scores)
 
 head(df_trst)
-df_trst$combined_fs <- (0.29 * df_trst$PA4) + (0.28 * df_trst$PA1) + (0.24 * df_trst$PA3) + (0.19 * df_trst$PA2)
+df_trst$combined_fs <- (0.30 * df_trst$PA1) + (0.25 * df_trst$PA4) + (0.24 * df_trst$PA3) + (0.21 * df_trst$PA2)
 
 ggplot(df_trst, aes(x = combined_fs)) +
   geom_histogram(binwidth = 0.1) +
   xlab("Trust Score") +
   ylab("Count") +
   ggtitle("Histogram of Trust Scores (PAF)")
-
-
-# ActiveとT_ParlとT_Legal無しバージョン
-df_trst2 <- select(df1, Say, Influence,
-                   T_Politicians, T_Parties, T_EU, T_UN,
-                   S_Gov, S_Democ)
-
-alpha(df_trst2)
-# raw_alpha = 0.9
-
-fa.parallel(df_trst2, fa = "fa", fm = "pa")
-paf_trst2 <- fa(df_trst2,
-                fm = "pa",
-                nfactors = 4,
-                rotate = "oblimin")
-paf_trst2
 
 
 #### モデリング用データフレーム(df2)作成 ####
@@ -119,13 +97,13 @@ df2 <- df2 %>%
                                df2$Age >= 40 & df2$Age < 60 ~ "40~59",
                                df2$Age >= 60 ~ "60~",))
 
-df2 <- df2 %>%
-  mutate(Trust_group = case_when(df2$Trust < -0.5617 ~ "1stQ",
-                                 df2$Trust >= -0.5617 & df2$Trust < 0 ~ "2ndQ",
-                                 df2$Trust >= 0 & df2$Trust < 0.6185 ~ "3rdQ",
-                                 df2$Trust >= 0.6185 ~ "4thQ"))
-
 summary(df2$Trust)
+df2 <- df2 %>%
+  mutate(Trust_group = case_when(df2$Trust < -0.5997 ~ "1stQ",
+                                 df2$Trust >= -0.5997 & df2$Trust < 0.1144 ~ "2ndQ",
+                                 df2$Trust >= 0.1144 & df2$Trust < 0.6275 ~ "3rdQ",
+                                 df2$Trust >= 0.6275 ~ "4thQ"))
+
 
 #### Direct causal relation ####
 
@@ -194,4 +172,5 @@ interaction.plot(
   fun = mean,                            # 平均値を図示
   type = "b",
   pch = 19,
-  col = c("red", "Yellow", "blue", "green"))
+  col = c("red", "Yellow", "blue", "green"),
+  legend = FALSE)

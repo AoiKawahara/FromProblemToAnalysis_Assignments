@@ -59,7 +59,11 @@ paf_imm
 df_imm <- cbind(df_imm, paf_imm$scores)
 df_imm$combined_fs <- (0.52 * df_imm$PA1) + (0.48 * df_imm$PA2)
 
-
+ggplot(df_imm, aes(x = combined_fs)) +
+  geom_histogram(binwidth = 0.1) +
+  xlab("Anti-imm Score") +
+  ylab("Count") +
+  ggtitle("Histogram of Anti-imm Scores (PAF)")
 
 #### 問題用データフレーム ####
 df1 <- select(df, agea, edlveit, hinctnta)
